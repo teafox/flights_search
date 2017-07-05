@@ -134,8 +134,8 @@ def search_flights(departure, destination, outbound_date, return_date=''):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Search flights')
-    parser.add_argument('itai_from', type=str)
-    parser.add_argument('itai_to', type=str)
+    parser.add_argument('iata_from', type=str)
+    parser.add_argument('iata_to', type=str)
     parser.add_argument('outbound_date', type=str)
     parser.add_argument('return_date', type=str, default='')
 
