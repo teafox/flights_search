@@ -75,7 +75,7 @@ def search_flights(departure, destination, outbound_date, return_date=''):
     }
 
     try:
-        session_request = session.get('https://www.flights_search.com/en/booking/flight/vacancy.php?', verify=False, data=search_request)
+        session_request = session.get('https://www.flyniki.com/en/booking/flight/vacancy.php?', verify=False, data=search_request)
         session_request.raise_for_status()
     except requests.exceptions.RequestException as err:
         print err
@@ -103,8 +103,14 @@ def search_flights(departure, destination, outbound_date, return_date=''):
         print err
         return -1
 
-    response = page_request.json()['templates']['main']
-    seller_page = html.fromstring(response)
+    response = page_request.json()
+    if 'error' in response:
+        error = html.fromstring(response['error'])
+        error_msg = error.xpath('//div/div/p')[0].text
+        print error_msg
+        return -1
+
+    seller_page = html.fromstring(response['templates']['main'])
     if not len(seller_page.xpath('//div[@id="vacancy_flighttable"]')):
         print 'No connections found for the entered data.'
         return -1
@@ -134,5 +140,5 @@ if __name__ == '__main__':
     parser.add_argument('return_date', type=str, default='')
 
     args = parser.parse_args()
-    # search_flights('DME', 'BER', '2017-07-09', '2017-07-10')
     search_flights(args.itai_from, args.itai_to, args.outbound_date, args.return_date)
+    # search_flights('DME', 'BER', '2017-07-09', '2017-07-10')
