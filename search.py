@@ -25,9 +25,7 @@ def scrap_flights(page, direction):
     currency = flights_table.xpath("thead/tr[2]/th[starts-with(@id, 'flight-table-header-price')]")[0].text
     flights = flights_table.xpath('tbody/tr/td[starts-with(@class, "fare")]/label/div[@class="lowest"]/span')
 
-    used = set()
-    flights = tuple(x for x in [i.attrib['title'] + currency for i in flights]
-                    if x not in used and (used.add(x) or True))
+    flights = (i.attrib['title'] + currency for i in flights)
     return map(detail_offer, flights)
 
 
@@ -40,7 +38,7 @@ def search_flights(departure, destination, outbound_date, return_date=''):
 
     iata = re.compile('^[A-Z]{3}$')
     if not iata.match(departure):
-        print 'Error: Incorrect IATA code of departure point.'
+        print('Error: Incorrect IATA code of departure point.')
         return -1
     if not iata.match(destination):
         print 'Error: Incorrect IATA code of destination point.'
@@ -48,8 +46,6 @@ def search_flights(departure, destination, outbound_date, return_date=''):
 
     try:
         datetime.datetime.strptime(outbound_date, '%Y-%m-%d')
-        if return_date:
-            datetime.datetime.strptime(return_date, '%Y-%m-%d')
     except ValueError:
         print 'Incorrect format of outbound date. Please use YYYY-MM-DD format.'
         return -1
@@ -61,7 +57,10 @@ def search_flights(departure, destination, outbound_date, return_date=''):
             print 'Incorrect format of return date. Please use YYYY-MM-DD format.'
             return -1
 
+    # TODO with for session
     session = requests.Session()
+
+    search_url = 'https://www.flyniki.com/en/booking/flight/vacancy.php?'
     search_request = {
         'departure': departure,
         'destination': destination,
@@ -73,13 +72,8 @@ def search_flights(departure, destination, outbound_date, return_date=''):
         'childCount': child_count,
         'infantCount': infant_count,
     }
-
-    try:
-        session_request = session.get('https://www.flyniki.com/en/booking/flight/vacancy.php?', verify=False, data=search_request)
-        session_request.raise_for_status()
-    except requests.exceptions.RequestException as err:
-        print err
-        return -1
+    session_request = session.get(search_url, verify=False, data=search_request)
+    session_request.raise_for_status()
 
     ajax_request = {
         '_ajax[templates][]': ['main'],
@@ -95,13 +89,9 @@ def search_flights(departure, destination, outbound_date, return_date=''):
         '_ajax[requestParams][openDateOverview]': '',
         '_ajax[requestParams][oneway]': oneway,
     }
+    page_request = session.post(session_request.url, verify=False, data=ajax_request)
+    page_request.raise_for_status()
 
-    try:
-        page_request = session.post(session_request.url, verify=False, data=ajax_request)
-        page_request.raise_for_status()
-    except requests.exceptions.RequestException as err:
-        print err
-        return -1
 
     response = page_request.json()
     if 'error' in response:
@@ -113,7 +103,8 @@ def search_flights(departure, destination, outbound_date, return_date=''):
     seller_page = html.fromstring(response['templates']['main'])
     if not len(seller_page.xpath('//div[@id="vacancy_flighttable"]')):
         print 'No connections found for the entered data.'
-        return -1
+        # return -1
+        raise ValueError("ghgjg")
 
     if oneway:
         outbound_flights = scrap_flights(seller_page, 'outbound')
@@ -139,6 +130,6 @@ if __name__ == '__main__':
     parser.add_argument('outbound_date', type=str)
     parser.add_argument('return_date', type=str, default='')
 
-    args = parser.parse_args()
-    search_flights(args.itai_from, args.itai_to, args.outbound_date, args.return_date)
-    # search_flights('DME', 'BER', '2017-07-09', '2017-07-10')
+    # args = parser.parse_args()
+    # search_flights(args.itai_from, args.itai_to, args.outbound_date, args.return_date)
+    search_flights('DME', 'BER', '2017-07-09', '2017-07-10')
