@@ -41,20 +41,20 @@ def search_flights(departure, destination, outbound_date, return_date=''):
         print('Error: Incorrect IATA code of departure point.')
         return -1
     if not iata.match(destination):
-        print 'Error: Incorrect IATA code of destination point.'
+        print('Error: Incorrect IATA code of destination point.')
         return -1
 
     try:
         datetime.datetime.strptime(outbound_date, '%Y-%m-%d')
     except ValueError:
-        print 'Incorrect format of outbound date. Please use YYYY-MM-DD format.'
+        print('Incorrect format of outbound date. Please use YYYY-MM-DD format.')
         return -1
     if return_date:
         try:
             oneway = ''
             datetime.datetime.strptime(return_date, '%Y-%m-%d')
         except ValueError:
-            print 'Incorrect format of return date. Please use YYYY-MM-DD format.'
+            print('Incorrect format of return date. Please use YYYY-MM-DD format.')
             return -1
 
     # TODO with for session
@@ -97,19 +97,19 @@ def search_flights(departure, destination, outbound_date, return_date=''):
     if 'error' in response:
         error = html.fromstring(response['error'])
         error_msg = error.xpath('//div/div/p')[0].text
-        print error_msg
+        print(error_msg)
         return -1
 
     seller_page = html.fromstring(response['templates']['main'])
     if not len(seller_page.xpath('//div[@id="vacancy_flighttable"]')):
-        print 'No connections found for the entered data.'
+        print('No connections found for the entered data.')
         # return -1
         raise ValueError("ghgjg")
 
     if oneway:
         outbound_flights = scrap_flights(seller_page, 'outbound')
         for item in sorted(outbound_flights, key=lambda x: float(x[-2])):
-            print ' '.join(item)
+            print(' '.join(item))
     else:
         outbound_flights = scrap_flights(seller_page, 'outbound')
         return_flights = scrap_flights(seller_page, 'return')
@@ -117,10 +117,10 @@ def search_flights(departure, destination, outbound_date, return_date=''):
         cross_and_price = tuple(tuple([x[0], x[1], float(x[0][-2]) + float(x[1][-2])]) for x in cross)
         for item in sorted(cross_and_price, key=lambda x: x[2]):
             there, here, price = item
-            print ' '.join(there)
-            print ' '.join(here)
-            print 'Total coast: ' + str(price) + ' ' + there[-1]
-            print ''
+            print(' '.join(there))
+            print(' '.join(here))
+            print('Total coast: ' + str(price) + ' ' + there[-1])
+            print('')
 
 
 if __name__ == '__main__':
