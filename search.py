@@ -4,13 +4,13 @@ Simple flights scraper for www.flyniki.com
 
 import collections
 import itertools
-import datetime
 import argparse
 import sys
 import re
 
 import requests
 
+from datetime import datetime
 from lxml import html
 
 
@@ -30,17 +30,18 @@ def validate_input(ticket):
         raise InputError('Incorrect IATA code')
 
     try:
-        outbound_date = datetime.datetime.strptime(ticket.outbound_date, '%Y-%m-%d')
+        outbound_date = datetime.strptime(ticket.outbound_date, '%Y-%m-%d')
         if ticket.return_date:
-            return_date = datetime.datetime.strptime(ticket.return_date, '%Y-%m-%d')
+            return_date = datetime.strptime(ticket.return_date, '%Y-%m-%d')
         else:
             return_date = outbound_date
     except ValueError:
-        raise InputError('Incorrect format of date. Please use YYYY-MM-DD format.')
+        raise InputError(
+            'Incorrect format of date. Please use YYYY-MM-DD format.')
 
     if outbound_date > return_date:
         raise InputError('Outbound date after return date')
-    now = datetime.datetime.now()
+    now = datetime.now()
     if now > outbound_date:
         raise InputError('We do not provide time travel service')
     if (return_date - now).days > 365:
@@ -100,9 +101,11 @@ def scrap_flights(page, direction):
                                '/div[@class="tablebackground"]'
                                '/table[@class="flighttable"]' % direction)[0]
 
-    currency = flights_table.xpath('thead/tr/th[starts-with(@id, "flight-table-header-price")]')[0].text
-    flights = flights_table.xpath('tbody/tr/td[starts-with(@headers, "flight-table-header-price")]'
-                                  '/label/div[@class="lowest"]/span')
+    currency = flights_table.xpath(
+        'thead/tr/th[starts-with(@id, "flight-table-header-price")]')[0].text
+    flights = flights_table.xpath(
+        'tbody/tr/td[starts-with(@headers, "flight-table-header-price")]'
+        '/label/div[@class="lowest"]/span')
 
     flights = (i.attrib['title'] + currency for i in flights)
     return map(detail_offer, flights)
@@ -128,7 +131,8 @@ def search_flights(ticket):
         return float(f[-2].replace(',', ''))
 
     if not ticket.return_date:  # One way
-        for i, item in enumerate(sorted(outbound_flights, key=lambda x: get_price(x)), start=1):
+        flights = enumerate(sorted(outbound_flights, key=get_price), start=1)
+        for i, item in flights:
             print(u'No {}. {}'.format(i, ' '.join(item)))
     else:
         return_flights = scrap_flights(seller_page, 'return')
@@ -144,13 +148,18 @@ def search_flights(ticket):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Search flights')
-    parser.add_argument('departure', type=str, help='IATA code of departure point')
-    parser.add_argument('destination', type=str, help='IATA code of destination point')
-    parser.add_argument('outbound_date', type=str, help='Outbound date')
-    parser.add_argument('return_date', type=str, nargs='?', default='', help='Return date')
+    parser.add_argument('departure', type=str,
+                        help='IATA code of departure point')
+    parser.add_argument('destination', type=str,
+                        help='IATA code of destination point')
+    parser.add_argument('outbound_date', type=str,
+                        help='Outbound date')
+    parser.add_argument('return_date', type=str, nargs='?', default='',
+                        help='Return date')
     args = parser.parse_args()
 
-    Ticket = collections.namedtuple('Ticket', 'departure, destination, outbound_date, return_date,')
+    Ticket = collections.namedtuple(
+        'Ticket', 'departure, destination, outbound_date, return_date,')
     input_ticket = Ticket(**vars(args))
 
     try:
