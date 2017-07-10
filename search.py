@@ -6,6 +6,7 @@ import collections
 import itertools
 import datetime
 import argparse
+import sys
 import re
 
 import requests
@@ -122,15 +123,16 @@ def search_flights(ticket):
 
     print('\nFlights found:\n')
     outbound_flights = scrap_flights(seller_page, 'outbound')
+
+    def get_price(f):
+        return float(f[-2].replace(',', ''))
+
     if not ticket.return_date:  # One way
-        for i, item in enumerate(sorted(outbound_flights, key=lambda x: float(x[-2])), start=1):
+        for i, item in enumerate(sorted(outbound_flights, key=lambda x: get_price(x)), start=1):
             print(u'No {}. {}'.format(i, ' '.join(item)))
     else:
         return_flights = scrap_flights(seller_page, 'return')
         cross = itertools.product(outbound_flights, return_flights)
-
-        def get_price(f):
-            return float(f[-2].replace(',', ''))
         cross_and_price = ((x[0], x[1], get_price(x[0]) + get_price(x[1])) for x in cross)
         for i, item in enumerate(sorted(cross_and_price, key=lambda x: x[2]), start=1):
             outbound_flight, return_flight, price = item
@@ -151,5 +153,10 @@ if __name__ == '__main__':
     Ticket = collections.namedtuple('Ticket', 'departure, destination, outbound_date, return_date,')
     input_ticket = Ticket(**vars(args))
 
-    validate_input(input_ticket)
-    search_flights(input_ticket)
+    try:
+        validate_input(input_ticket)
+        search_flights(input_ticket)
+        sys.exit(0)
+    except (InputError, RequestError, requests.exceptions.HTTPError) as e:
+        sys.stderr.write(e.message)
+        sys.exit(1)
