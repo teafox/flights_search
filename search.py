@@ -98,7 +98,7 @@ def scrap_flights(page, direction):
                                '/div[@class="tablebackground"]'
                                '/table[@class="flighttable"]' % direction)[0]
 
-    currency = flights_table.xpath("thead/tr/th[starts-with(@id, 'flight-table-header-price')]")[0].text
+    currency = flights_table.xpath('thead/tr/th[starts-with(@id, "flight-table-header-price")]')[0].text
     flights = flights_table.xpath('tbody/tr/td[starts-with(@headers, "flight-table-header-price")]'
                                   '/label/div[@class="lowest"]/span')
 
