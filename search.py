@@ -1,9 +1,14 @@
+"""
+Simple flights scraper for www.flyniki.com
+"""
+
 import collections
 import itertools
-import requests
 import datetime
 import argparse
 import re
+
+import requests
 
 from lxml import html
 
