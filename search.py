@@ -28,11 +28,12 @@ def validate_input(ticket):
     if not (iata.match(ticket.departure) and iata.match(ticket.destination)):
         raise InputError('Incorrect IATA code')
 
-    if not ticket.return_date:
-        ticket.return_date = ticket.outbound_date
     try:
         outbound_date = datetime.datetime.strptime(ticket.outbound_date, '%Y-%m-%d')
-        return_date = datetime.datetime.strptime(ticket.return_date, '%Y-%m-%d')
+        if ticket.return_date:
+            return_date = datetime.datetime.strptime(ticket.return_date, '%Y-%m-%d')
+        else:
+            return_date = outbound_date
     except ValueError:
         raise InputError('Incorrect format of date. Please use YYYY-MM-DD format.')
 
@@ -123,7 +124,7 @@ def search_flights(ticket):
     outbound_flights = scrap_flights(seller_page, 'outbound')
     if not ticket.return_date:  # One way
         for i, item in enumerate(sorted(outbound_flights, key=lambda x: float(x[-2])), start=1):
-            print('No {}. {}'.format(i, ' '.join(item)))
+            print(u'No {}. {}'.format(i, ' '.join(item)))
     else:
         return_flights = scrap_flights(seller_page, 'return')
         cross = itertools.product(outbound_flights, return_flights)
@@ -144,7 +145,7 @@ if __name__ == '__main__':
     parser.add_argument('departure', type=str, help='IATA code of departure point')
     parser.add_argument('destination', type=str, help='IATA code of destination point')
     parser.add_argument('outbound_date', type=str, help='Outbound date')
-    parser.add_argument('return_date', type=str, default='', help='Return date')
+    parser.add_argument('return_date', type=str, nargs='?', default='', help='Return date')
     args = parser.parse_args()
 
     Ticket = collections.namedtuple('Ticket', 'departure, destination, outbound_date, return_date,')
