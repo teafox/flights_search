@@ -7,10 +7,9 @@ import itertools
 import argparse
 import sys
 import re
+from datetime import datetime
 
 import requests
-
-from datetime import datetime
 from lxml import html
 
 
@@ -30,9 +29,9 @@ def validate_input(ticket):
         raise InputError('Incorrect IATA code')
 
     try:
-        outbound_date = datetime.strptime(ticket.outbound_date, '%Y-%m-%d')
+        outbound_date = datetime.strptime(ticket.outbound_date, '%Y-%m-%d').date()
         if ticket.return_date:
-            return_date = datetime.strptime(ticket.return_date, '%Y-%m-%d')
+            return_date = datetime.strptime(ticket.return_date, '%Y-%m-%d').date()
         else:
             return_date = outbound_date
     except ValueError:
@@ -41,7 +40,7 @@ def validate_input(ticket):
 
     if outbound_date > return_date:
         raise InputError('Outbound date after return date')
-    now = datetime.now()
+    now = datetime.now().date()
     if now > outbound_date:
         raise InputError('We do not provide time travel service')
     if (return_date - now).days > 365:
